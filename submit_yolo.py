@@ -41,9 +41,15 @@ for label_results_path in label_results_paths:
             if class_name == "":
                 continue
             image_data[class_name].append(
-                list(map(int, [center_x, center_y, width, height]))
+                list(map(int, [center_x - width / 2, center_y - height / 2, center_x + width / 2, center_y + height / 2]))
             )
-    data[file_name] = image_data    
+    deletes = []
+    for key in image_data.keys():
+        if image_data[key] == []:
+            deletes.append(key)
+    for key in deletes:
+        del image_data[key]
+    data[file_name+".jpg"] = image_data    
 
 with open("submit_yolo.json", "w") as f:
     f.write(json.dumps(data))
