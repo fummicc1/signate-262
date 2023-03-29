@@ -25,3 +25,4 @@ runs
 *.jpg
 *.csv
 *.tfrec
+submit*.json
