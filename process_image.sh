@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mode="val"
+mode="train"
 dir=`dirname $0`/$mode/images
 cnt=1
 for filename in `ls $dir`; do
