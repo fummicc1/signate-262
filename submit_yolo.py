@@ -3,9 +3,10 @@ import json
 from PIL.Image import open as im_open
 from glob import glob
 
-detection_path = "runs/detect/predict2/labels"
+mordern_detection_path = "runs/detect/predict3/labels"
+old_detection_path = "runs/detect/predict4/labels"
 
-label_results_paths = list(glob(os.path.join(detection_path, "*.txt")))
+label_results_paths = list(glob(os.path.join(mordern_detection_path, "*.txt"))) + list(glob(os.path.join(old_detection_path, "*.txt")))
 data = {}
 
 for label_results_path in label_results_paths:
