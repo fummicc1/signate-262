@@ -27,18 +27,18 @@ for target in $target_path; do
     label=`realpath "$mode/labels/$(basename $target .jpg).txt"`
     annotation=$(realpath train_annotations/$(echo "${annotations}" | sed -n ${cnt}p))    
     old_token="\"年代\": \"古典籍\""
-    mordern_token="\"年代\": \"近代\""
+    modern_token="\"年代\": \"近代\""
     old_token_cnt=`cat "$annotation" | grep "$old_token" | wc -l`
-    mordern_token_cnt=`cat "$annotation" | grep "$mordern_token" | wc -l`
+    modern_token_cnt=`cat "$annotation" | grep "$modern_token" | wc -l`
     filename=`basename $target .jpg`
     if [ $old_token_cnt -gt 0 ]; then
         img_dir="$mode/old/images"
         label_dir="$mode/old/labels"
         annotation_dir="$mode/old/annotations"
-    elif [ $mordern_token_cnt -gt 0 ]; then
-        img_dir="$mode/mordern/images"
-        label_dir="$mode/mordern/labels"
-        annotation_dir="$mode/mordern/annotations"
+    elif [ $modern_token_cnt -gt 0 ]; then
+        img_dir="$mode/modern/images"
+        label_dir="$mode/modern/labels"
+        annotation_dir="$mode/modern/annotations"
     else
         echo skipped
         continue
