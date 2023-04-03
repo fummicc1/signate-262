@@ -24,15 +24,42 @@ from tqdm import tqdm
 from PIL import ImageDraw
 from ultralytics import YOLO
 import subprocess
+from wandb_callback import callbacks 
 
 data_path="/workspace/modern_book.yaml"
 weight_path="/workspace/yolov8x.pt"
 out_path="/workspace/results/train_modern_book"
-command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1200 lr0="0.01" lrf="0.0005" project="{out_path}" device="0,1,2,3"'
-subprocess.run(command, shell=True)
+model = YOLO(weight_path)
+for event,func in callbacks.items():
+    model.add_callback(event,func)
+model.train(
+    data=data_path,
+    epochs=30,
+    imgsz=1600,
+    batch=4,
+    lr0=0.01,
+    project=out_path,
+    device="0,1,2,3"
+)
+# command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1600 batch=8 lr0="0.01" project="{out_path}" device="0,1,2,3"'
+# subprocess.run(command, shell=True)
+
 
 data_path="/workspace/old_book.yaml"
 weight_path="/workspace/yolov8x.pt"
 out_path="/workspace/results/train_old_book"
-command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1200 lr0="0.01" lrf="0.0005" project="{out_path}" device="0,1,2,3"'
-subprocess.run(command, shell=True)
+model = YOLO(weight_path)
+for event,func in callbacks.items():
+    model.add_callback(event,func)
+model.train(
+    data=data_path,
+    epochs=30,
+    imgsz=1600,
+    batch=4,
+    lr0=0.01,
+    project=out_path,
+    device="0,1,2,3"
+)
+# command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1600 batch=8 lr0="0.01" project="{out_path}" device="0,1,2,3"'
+# subprocess.run(command, shell=True)
+
