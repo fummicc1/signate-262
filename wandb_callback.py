@@ -10,12 +10,13 @@ except (ImportError, AssertionError):
     wandb = None
 
 
-def on_pretrain_routine_start(trainer):
+def on_pretrain_routine_start(trainer):    
     wandb.init(project="-".join(trainer.args.project.split("/")) or "YOLOv8", name=trainer.args.name, config=dict(
         trainer.args)) if not wandb.run else wandb.run
 
 
 def on_fit_epoch_end(trainer):
+    return
     wandb.run.log(trainer.metrics, step=trainer.epoch + 1)
     if trainer.epoch == 0:
         model_info = {
@@ -26,6 +27,7 @@ def on_fit_epoch_end(trainer):
 
 
 def on_train_epoch_end(trainer):
+    return
     wandb.run.log(trainer.label_loss_items(trainer.tloss, prefix="train"), step=trainer.epoch + 1)
     wandb.run.log(trainer.lr, step=trainer.epoch + 1)
     if trainer.epoch == 1:
@@ -35,6 +37,7 @@ def on_train_epoch_end(trainer):
 
 
 def on_train_end(trainer):
+    return
     art = wandb.Artifact(type="model", name=f"run_{wandb.run.id}_model")
     if trainer.best.exists():
         art.add_file(trainer.best)
