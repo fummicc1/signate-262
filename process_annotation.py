@@ -22,8 +22,8 @@ if __name__ == "__main__":
             # 画像のサイズを直接取得
             image_name = path.split("/")[-1].split(".")[0]
             image_path = "/".join(path.split("/")[:-2]) + "/images/" + image_name + ".jpg"
-            img = pil_open(image_path).convert("RGB")
-            img_width, img_height = img.size
+            # img = pil_open(image_path).convert("RGB")
+            img_width, img_height = (1600, 1600)
             center_x /= img_width
             width /= img_width
             center_y /= img_height

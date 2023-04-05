@@ -44,20 +44,22 @@ from wandb_callback import callbacks
 # In[ ]:
 
 
-data_path="/workspace/modern_book.yaml"
-weight_path="/workspace/yolov8x.pt"
-out_path="/workspace/results/train_modern_book"
-model = YOLO(weight_path)
-for event,func in callbacks.items():
-    model.add_callback(event,func)
-model.train(
-    data=data_path,
-    epochs=40,
-    imgsz=1200,
-    lr0=0.01,
-    project=out_path,
-    device="0,1,2,3"
-)
+# data_path="/workspace/modern_book.yaml"
+# weight_path="/workspace/yolov8x.pt"
+# out_path="/workspace/results/train_modern_book"
+# model = YOLO(weight_path)
+# for event,func in callbacks.items():
+#     model.add_callback(event,func)
+# model.train(
+#     data=data_path,
+#     epochs=40,
+#     imgsz=1200,
+#     batch=16,
+#     lr0=0.01,
+#     lrf=0.005,
+#     project=out_path,
+#     device="0,1,2,3"
+# )
 # command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1600 batch=8 lr0="0.01" project="{out_path}" device="0,1,2,3"'
 # subprocess.run(command, shell=True)
 
@@ -75,10 +77,12 @@ model.train(
     data=data_path,
     epochs=40,
     imgsz=1200,
+    batch=16,
+    lrf=0.005,
     lr0=0.01,
     project=out_path,
     device="0,1,2,3"
 )
-# command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1600 batch=8 lr0="0.01" project="{out_path}" device="0,1,2,3"'
-# subprocess.run(command, shell=True)
+command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1600 batch=8 lr0="0.01" project="{out_path}" device="0,1,2,3"'
+subprocess.run(command, shell=True)
 

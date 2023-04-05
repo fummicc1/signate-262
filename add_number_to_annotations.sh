@@ -1,5 +1,4 @@
 #!/bin/bash
-
 read -p "mode. train/val: " mode
 if [ "$mode" = "train" ]; then
     dir_name="train"
@@ -10,12 +9,12 @@ else
     exit 1
 fi
 
-dir=`dirname $0`/$mode/images
+dir=$(realpath `dirname $0`)
+ann=$dir/$mode/annotations
+annotations=`ls $ann`
 cnt=1
-for filename in `ls $dir`; do
-    path=$dir/$filename
-    echo "path: ${path}"
-    format_cnt=$(printf "%06d" $cnt)
-    mv $path $dir/$format_cnt.jpg
-    (( cnt += 1 ))
+for annotation in $annotations; do
+    num=$(printf "%06d" $cnt)
+    mv $ann/$annotation $ann/$num.json
+    ((cnt++))
 done
