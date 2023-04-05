@@ -13,15 +13,13 @@ train: train/modern/images  # train images (relative to 'path') 128 images
 val: val/modern/images  # val images (relative to 'path') 128 images
 
 # Classes
-nc: 10
+nc: 8
 names:
   0: 0_background
-  1: 1_overall  
-  2: 2_handwritten
-  3: 3_typography
-  4: 4_illustration
-  5: 5_stamp
-  6: 6_headline
-  7: 7_caption
-  8: 8_textline
-  9: 9_table
+  1: 1_overall
+  2: 4_illustration
+  3: 5_stamp
+  4: 6_headline
+  5: 7_caption
+  6: 8_textline
+  7: 9_table

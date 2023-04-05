@@ -3,8 +3,31 @@ from PIL.Image import open as pil_open
 import os
 import json
 
-def label_str_to_num(label: str) -> int:
-    return int(label[0])
+def label_str_to_num(label: str, is_modern: bool) -> int:    
+    if is_modern:
+        m = {
+            0: "0_background",
+            1: "1_overall",
+            2: "4_illustration",
+            3: "5_stamp",
+            4: "6_headline",
+            5: "7_caption",
+            6: "8_textline",
+            7: "9_table"
+        }
+    else:
+        m = {
+            0: "0_background",
+            1: "1_overall",
+            2: "2_handwritten",
+            3: "3_typography",
+            4: "4_illustration",
+            5: "5_stamp",
+        }
+    for k, v in m.items():
+        if v == label:
+            return k
+    return -1
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -15,6 +38,7 @@ if __name__ == "__main__":
     index: str = args.index
     with open(path, "r") as f:
         data = json.load(f)
+        is_modern = data["attributes"]["年代"] == "近代"
         for label in data["labels"]:
             category = label["category"]
             box = label["box2d"]
@@ -31,7 +55,7 @@ if __name__ == "__main__":
             dir = os.path.dirname(path)
             os.makedirs(os.path.join(dir, "..", "labels"), exist_ok=True)
             with open(os.path.join(dir, "..", "labels", "{:06d}.txt".format(int(index))), "a") as new_f:
-                d = [label_str_to_num(category), center_x, center_y, width, height]
+                d = [label_str_to_num(category, is_modern), center_x, center_y, width, height]
                 d = map(str, d)
                 new_f.write(" ".join(d))
                 new_f.write("\n")    
