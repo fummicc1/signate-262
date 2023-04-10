@@ -1,0 +1,6 @@
+[submodule "Weighted-Boxes-Fusion"]
+	path = Weighted-Boxes-Fusion
+	url = https://github.com/ZFTurbo/Weighted-Boxes-Fusion
+[submodule "yolov5"]
+	path = yolov5
+	url = https://github.com/ultralytics/yolov5

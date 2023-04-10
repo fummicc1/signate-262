@@ -53,7 +53,7 @@ use_yolo_pretrained = False
 
 if mode == "modern":
     data_path="/workspace/modern_book.yaml"
-    if use_yolo_pretrained:
+    if not use_yolo_pretrained:
         weight_path="/workspace/yolov8x.pt"
     else:
         weight_path="/workspace/yolo_modern_weights-base.pt"
@@ -82,7 +82,7 @@ if mode == "modern":
 if mode == "old":
     data_path="/workspace/old_book.yaml"
     
-    if use_yolo_pretrained:
+    if not use_yolo_pretrained:
         weight_path="/workspace/yolov8x.pt"
     else:
         weight_path="/workspace/yolo_old_weights-base.pt"
@@ -103,21 +103,4 @@ if mode == "old":
     )
     # command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1600 batch=8 lr0="0.01" project="{out_path}" device="0,1,2,3"'
     # subprocess.run(command, shell=True)
-
-
-model = YOLO(weight_path)
-for event,func in callbacks.items():
-    model.add_callback(event,func)
-model.train(
-    data=data_path,
-    epochs=40,
-    imgsz=1600,
-    batch=4,
-    lrf=0.005,
-    lr0=0.01,
-    project=out_path,
-    device="0,1,2,3"
-)
-# command=f'yolo detect train model={weight_path} data={data_path} epochs=30 imgsz=1600 batch=8 lr0="0.01" project="{out_path}" device="0,1,2,3"'
-# subprocess.run(command, shell=True)
 

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 # In[ ]:
 
 
@@ -33,13 +36,18 @@ import engine
 # In[ ]:
 
 
+os.chdir("/workspace")
+
+
+# In[ ]:
+
+
 class Config:
-    batch_size = 32
-    num_epochs = 10
-    learning_rate = 1e-4
-    weight_decay = 1e-5
+    batch_size = 16
+    num_epochs = 30
+    learning_rate = 1e-3
     num_classes = 10
-    input_size = (800, 800)
+    input_size = (1600, 1600)
     
     def __init__(self) -> None:
         pass
@@ -215,11 +223,11 @@ from glob import glob
 import pathlib
 from sklearn.model_selection import train_test_split
 
-annotation_path = pathlib.Path("train_annotations") / "*.json"
+annotation_path = pathlib.Path("train") / "annotations" / "*.json"
 labels = list(glob(annotation_path.absolute().as_posix()))
 new_labels = []
 
-images_path = pathlib.Path("train_images") / "*.jpg"
+images_path = pathlib.Path("train") / "images" / "*.jpg"
 images = list(glob(images_path.absolute().as_posix()))
 # new_images = []
 # for i in range(len(images)):
@@ -258,6 +266,7 @@ def custom_collate(batch):
 device = torch.device("cuda")
 model = CustomModel().to(device)
 model = nn.DataParallel(model).to(device)
+model.load_state_dict(torch.load("faster_rcnn_weight-1680925955.4584112.pth"))
 
 
 # ## Train
@@ -296,7 +305,7 @@ val_dataset = CustomDataset(
         transforms.ToTensor(),
     ])
 )
-val_dataloader = DataLoader(dataset=dataset, batch_size=config.batch_size, shuffle=False, num_workers=2, collate_fn=custom_collate)
+val_dataloader = DataLoader(dataset=dataset, batch_size=config.batch_size, shuffle=False, num_workers=4, collate_fn=custom_collate)
 
 
 # In[ ]:
@@ -319,15 +328,89 @@ def show(img, target):
 # In[ ]:
 
 
-img, target = dataset[1]
+# img, target = dataset[1]
 # show(img, target)
 
 
 # In[ ]:
 
 
+# #結果の表示
+
+# def show(val_dataloader):
+#     import matplotlib.pyplot as plt
+#     from PIL import ImageDraw, ImageFont
+#     from PIL import Image
+    
+#     #GPUのキャッシュクリア
+#     import torch
+#     torch.cuda.empty_cache()
+   
+#     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu') 
+#     #device = torch.device('cpu')    
+#     model.to(device)
+#     model.eval()#推論モードへ
+
+#     images, targets = next(iter(val_dataloader))
+
+#     images = list(img.to(device) for img in images)
+    
+#     #推論時は予測を返す
+#     '''
+#      - boxes (FloatTensor[N, 4]): the predicted boxes in [x1, y1, x2, y2] format, with values of x
+#           between 0 and W and values of y between 0 and H
+#         - labels (Int64Tensor[N]): the predicted labels for each image
+#         - scores (Tensor[N]): the scores or each prediction
+#     '''
+#     outputs = model(images)
+
+#     for i, image in enumerate(images):
+
+#         image = image.permute(1, 2, 0).cpu().numpy()
+#         image = Image.fromarray((image * 255).astype(np.uint8))
+
+#         boxes = outputs[i]["boxes"].data.cpu().numpy()
+#         scores = outputs[i]["scores"].data.cpu().numpy()
+#         labels = outputs[i]["labels"].data.cpu().numpy()
+
+#         category={0: '0_background',1:'1_overall', 2:'2_handwritten',3: '3_typography',4: '4_illustration', 5:'5_stamp', 6:'6_headline', 7:'7_caption',8: '8_textline', 9:'9_table'}
+
+
+
+#         boxes = boxes[scores >= 0.5].astype(np.int32)
+#         scores = scores[scores >= 0.5]
+
+#         for i, box in enumerate(boxes):
+#             draw = ImageDraw.Draw(image)
+#             label = category[labels[i]]
+#             draw.rectangle([(box[0], box[1]), (box[2], box[3])], outline="red", width=3)
+
+#             # ラベルの表示
+
+#             from PIL import Image, ImageDraw, ImageFont 
+#             #fnt = ImageFont.truetype('/content/mplus-1c-black.ttf', 20)
+#             fnt = ImageFont.load_default()
+#             text_w, text_h = fnt.getsize(label)
+#             draw.rectangle([box[0], box[1], box[0]+text_w, box[1]+text_h], fill="red")
+#             draw.text((box[0], box[1]), label, font=fnt, fill='white')
+            
+#         #画像を保存したい時用
+#         #image.save(f"resample_test{str(i)}.png")
+
+#         fig, ax = plt.subplots(1, 1)
+#         ax.imshow(np.array(image))
+
+#     plt.show()
+
+
+# show(val_dataloader)
+
+
+# In[ ]:
+
+
 def train(epoch: int):
-    bar = tqdm(val_dataloader)
+    bar = tqdm(dataloader)
     # train  
     model.train()
     for imgs, d_targets in bar: 
@@ -342,12 +425,17 @@ def train(epoch: int):
         optimizer.step()        
         
     scheduler.step()
-        
+
     # val
     # 検証フェーズ
     model.eval()    
     with torch.no_grad():
-        engine.evaluate(model, val_dataloader, device)        
+        eval = engine.evaluate(model, val_dataloader, device)        
+        imgs = eval.eval_imgs
+        for iou_type in eval.iou_types:
+            print("Result:")
+            print(" iou type:", iou_type)
+            print(" ", imgs[iou_type])
 
 main_bar = tqdm(range(1, config.num_epochs+1))
 for epoch in main_bar:
@@ -359,5 +447,5 @@ for epoch in main_bar:
 
 import time
 
-torch.save(model, f'model_weight-{time.time()}.pth')
+torch.save(model.state_dict(), f'faster_rcnn_weight-{time.time()}.pth')
 

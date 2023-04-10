@@ -27,3 +27,6 @@ results
 *.csv
 *.tfrec
 submit*.json
+emsemble
+
+*.ttf
