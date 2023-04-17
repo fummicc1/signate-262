@@ -52,27 +52,28 @@ use_yolo_pretrained = False
 
 
 if mode == "":    
-    data_path="/workspace/modern_book.yaml"
+    data_path="/home/fummicc1/codes/signate/modern_book.yaml"
     if not use_yolo_pretrained:
-        weight_path="/workspace/yolov5x6.pt"
+        weight_path="/home/fummicc1/codes/signate/yolov5x6.pt"
     else:
-        weight_path="/workspace/yolo_modern_weights-base.pt"
-    out_path="/workspace/results/train_modern_book_yolov5"
-    command = f"cd yolov5 && python train.py --img 1200 --epochs 30 --batch-size 8 --data {data_path} --weights {weight_path} --project {out_path} --device 0,1,2,3"
-    # subprocess.run(command, shell=True)
+        weight_path="/home/fummicc1/codes/signate/yolo_modern_weights-base.pt"
+    out_path="/home/fummicc1/codes/signate/results/train_modern_book_yolov5"
+    command = f"cd yolov5 && python train.py --img 1200 --epochs 30  --data {data_path} --weights {weight_path} --project {out_path} --device 0,1,2,3"
+    # --batch-size 8
+    subprocess.run(command, shell=True)
 
 
 # In[ ]:
 
 
 if mode == "":
-    data_path="/workspace/old_book.yaml"
+    data_path="/home/fummicc1/codes/signate/old_book.yaml"
     
     if not use_yolo_pretrained:
-        weight_path="/workspace/yolov5x6.pt"
+        weight_path="/home/fummicc1/codes/signate/yolov5x6.pt"
     else:
-        weight_path="/workspace/yolo_old_weights-base.pt"
-    out_path="/workspace/results/train_old_book_yolov5"
-    command = f"cd yolov5 && python train.py --img 1200 --epochs 30 --batch-size 8 --data {data_path} --weights {weight_path} --project {out_path} --device 0,1,2,3"
+        weight_path="/home/fummicc1/codes/signate/yolo_old_weights-base.pt"
+    out_path="/home/fummicc1/codes/signate/results/train_old_book_yolov5"
+    command = f"cd yolov5 && python train.py --img 1200 --epochs 30 --data {data_path} --weights {weight_path} --project {out_path} --device 0,1,2,3"
     subprocess.run(command, shell=True)
 

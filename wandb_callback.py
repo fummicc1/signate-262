@@ -1,5 +1,3 @@
-# COPY FROM https://github.com/lyhue1991/YOLOv8_tools/blob/main/wandb_callback.py
-
 from ultralytics.yolo.utils.torch_utils import get_flops, get_num_params
 
 try:
@@ -9,6 +7,11 @@ try:
 except (ImportError, AssertionError):
     wandb = None
 
+def class2dict(f):
+    return dict(
+        (name, getattr(f, name)) for name in dir(f) if not name.startswith("__")
+    )
+
 
 def on_pretrain_routine_start(trainer):    
     wandb.init(project="-".join(trainer.args.project.split("/")) or "YOLOv8", name=trainer.args.name, config=dict(
@@ -16,32 +19,32 @@ def on_pretrain_routine_start(trainer):
 
 
 def on_fit_epoch_end(trainer):
-    return
-    wandb.run.log(trainer.metrics, step=trainer.epoch + 1)
+    if trainer.metrics is not None:
+        print("trainer.metrics", class2dict(trainer.metrics))
+        wandb.log(class2dict(trainer.metrics), step=trainer.epoch + 1)
     if trainer.epoch == 0:
         model_info = {
             "model/parameters": get_num_params(trainer.model),
             "model/GFLOPs": round(get_flops(trainer.model), 3),
-            "model/speed(ms)": round(sum(trainer.validator.speed.values()), 3)}
-        wandb.run.log(model_info, step=trainer.epoch + 1)
+            "model/speed(ms)": round(sum(trainer.validator.speed.values()), 3) if trainer.validator is not None else 0
+        }
+        wandb.log(model_info, step=trainer.epoch + 1)
 
 
 def on_train_epoch_end(trainer):
-    return
-    wandb.run.log(trainer.label_loss_items(trainer.tloss, prefix="train"), step=trainer.epoch + 1)
-    wandb.run.log(trainer.lr, step=trainer.epoch + 1)
+    wandb.log(trainer.label_loss_items(trainer.tloss, prefix="train"), step=trainer.epoch + 1)
+    wandb.log(trainer.lr, step=trainer.epoch + 1)
     if trainer.epoch == 1:
-        wandb.run.log({f.stem: wandb.Image(str(f))
+        wandb.log({f.stem: wandb.Image(str(f))
                        for f in trainer.save_dir.glob('train_batch*.jpg')},
                       step=trainer.epoch + 1)
 
 
 def on_train_end(trainer):
-    return
     art = wandb.Artifact(type="model", name=f"run_{wandb.run.id}_model")
     if trainer.best.exists():
         art.add_file(trainer.best)
-        wandb.run.log_artifact(art)
+        wandb.log_artifact(art)
 
 
 callbacks = {

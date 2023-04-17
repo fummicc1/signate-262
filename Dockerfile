@@ -1,5 +1,9 @@
 FROM nvcr.io/nvidia/pytorch:22.04-py3
 
 WORKDIR /workspace
+COPY ./ ./
 
-VOLUME /home/fummicc1/codes/signate
+VOLUME ./
+
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES all

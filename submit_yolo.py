@@ -3,10 +3,12 @@ import json
 from PIL.Image import open as im_open
 from glob import glob
 
-modern_detection_path = "/workspace/yolov5/runs/detect/exp/labels"
-old_detection_path = "/workspace/yolov5/runs/detect/exp2/labels"
-is_emsemble = False
-is_yolov5 = True
+# modern_detection_path = "/home/fummicc1/codes/signate/yolov5/runs/detect/exp/labels"
+# old_detection_path = "/home/fummicc1/codes/signate/yolov5/runs/detect/exp2/labels"
+modern_detection_path = "/home/fummicc1/codes/signate/emsemble/modern-ret"
+old_detection_path = "/home/fummicc1/codes/signate/emsemble/old-ret"
+is_emsemble = True
+is_yolov5 = False
 
 all_label_results_paths = [list(glob(os.path.join(modern_detection_path, "*.txt"))), list(glob(os.path.join(old_detection_path, "*.txt")))]
 with open("sample_submit.json", "r") as f:

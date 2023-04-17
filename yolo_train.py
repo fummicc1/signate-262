@@ -52,12 +52,12 @@ use_yolo_pretrained = False
 
 
 if mode == "modern":
-    data_path="/workspace/modern_book.yaml"
+    data_path="/home/fummicc1/codes/signate/modern_book.yaml"
     if not use_yolo_pretrained:
-        weight_path="/workspace/yolov8x.pt"
+        weight_path="/home/fummicc1/codes/signate/yolov8x.pt"
     else:
-        weight_path="/workspace/yolo_modern_weights-base.pt"
-    out_path="/workspace/results/train_modern_book"
+        weight_path="/home/fummicc1/codes/signate/yolo_modern_weights-base.pt"
+    out_path="/home/fummicc1/codes/signate/results/train_modern_book"
     model = YOLO(weight_path)
     for event,func in callbacks.items():
         model.add_callback(event,func)
@@ -80,13 +80,13 @@ if mode == "modern":
 
 
 if mode == "old":
-    data_path="/workspace/old_book.yaml"
+    data_path="/home/fummicc1/codes/signate/old_book.yaml"
     
     if not use_yolo_pretrained:
-        weight_path="/workspace/yolov8x.pt"
+        weight_path="/home/fummicc1/codes/signate/yolov8x.pt"
     else:
-        weight_path="/workspace/yolo_old_weights-base.pt"
-    out_path="/workspace/results/train_old_book"
+        weight_path="/home/fummicc1/codes/signate/yolo_old_weights-base.pt"
+    out_path="/home/fummicc1/codes/signate/results/train_old_book"
     model = YOLO(weight_path)
     for event,func in callbacks.items():
         model.add_callback(event,func)
