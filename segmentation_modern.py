@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[59]:
+# In[1]:
 
 
 import os
@@ -21,13 +21,13 @@ import albumentations as albu
 import torch.nn as nn
 
 
-# In[60]:
+# In[2]:
 
 
 os.chdir("/home/fummicc1/codes/signate/")
 
 
-# In[61]:
+# In[3]:
 
 
 TRAIN_DIR = pathlib.Path('./train')
@@ -35,7 +35,7 @@ VAL_DIR = pathlib.Path('./val')
 TEST_DIR = pathlib.Path('./test')
 
 
-# In[62]:
+# In[4]:
 
 
 x_train_dir = TRAIN_DIR / "modern" / "images"
@@ -48,13 +48,13 @@ x_test_dir = TEST_DIR / "modern" / "images"
 y_test_dir = TEST_DIR / "modern" / "masks"
 
 
-# In[63]:
+# In[5]:
 
 
 def get_training_augmentation():
     train_transform = [
-        albu.PadIfNeeded(min_height=1216, min_width=1216, always_apply=True, border_mode=0),
-        albu.RandomCrop(height=1216, width=1216, always_apply=True)
+        albu.PadIfNeeded(min_height=960, min_width=960, always_apply=True, border_mode=0),
+        albu.RandomCrop(height=960, width=960, always_apply=True)
     ]
     return albu.Compose(train_transform)
     
@@ -75,7 +75,7 @@ def get_preprocessing(preprocessing_fn):
     return albu.Compose(_transform)
 
 
-# In[64]:
+# In[6]:
 
 
 # 可視化用の関数
@@ -92,30 +92,28 @@ def visualize(**images):
     plt.show()
 
 
-# In[65]:
+# In[7]:
 
 
 # パラメータ
 ENCODER = 'se_resnext50_32x4d'
 ENCODER_WEIGHTS = 'imagenet'
-ACTIVATION = None 
-CLASS_MAP = {
+ACTIVATION = "softmax"
+CLASS_MAP = {  
   0: "0_background",
-  1: "1_overall",
-  2: "2_handwritten",
-  3: "3_typography",
-  4: "4_illustration",
-  5: "5_stamp",
-  6: "6_headline",
-  7: "7_caption",
-  8: "8_textline",
-  9: "9_table",
+  1: "2_handwritten",
+  2: "3_typography",
+  3: "4_illustration",
+  4: "5_stamp",
+  5: "6_headline",
+  6: "7_caption",
+  7: "8_textline",
 }
 CLASSES = CLASS_MAP.values()
 DEVICE = 'cuda'
 
 
-# In[66]:
+# In[8]:
 
 
 class MyDataset(Dataset):
@@ -146,7 +144,10 @@ class MyDataset(Dataset):
         # データの読み込み
         image = cv2.imread(self.images[i])
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        mask = cv2.imread(self.masks[i], 0) // 25 # 色を強調するために25倍されている為
+        # mask = cv2.imread(self.masks[i], 0) 
+        mask = cv2.imread(self.masks[i], 0) // 25
+        # 0_backgroundについては-1になってしまう
+        mask[mask < 0] = 0
         
         # 学習対象のクラス(例えば、'car')のみを抽出
         masks = [(mask == v) for v in self.class_values]
@@ -166,18 +167,18 @@ class MyDataset(Dataset):
         return image, mask
 
 
-# In[67]:
+# In[9]:
 
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-# In[68]:
+# In[10]:
 
 
 # SMPを用いて学習済みモデルを取得(アーキテクチャはFPN)
-model = smp.FPN(
+model = smp.UnetPlusPlus(
     encoder_name=ENCODER, 
     encoder_weights=ENCODER_WEIGHTS, 
     classes=len(CLASSES), 
@@ -187,7 +188,7 @@ model = model.to(device=DEVICE).type(torch.float)
 model = nn.DataParallel(model).to(device=DEVICE).type(torch.float)
 
 
-# In[69]:
+# In[11]:
 
 
 # 損失関数
@@ -204,7 +205,7 @@ optimizer = torch.optim.Adam([
 ])
 
 
-# In[70]:
+# In[12]:
 
 
 from torch.utils.data import DataLoader
@@ -219,10 +220,10 @@ train_dataset = MyDataset(
 )
 
 # データローダーの作成
-train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, num_workers=12)
+train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=12)
 
 
-# In[71]:
+# In[13]:
 
 
 from torch.utils.data import DataLoader
@@ -236,10 +237,10 @@ val_dataset = MyDataset(
 )
 
 # データローダーの作成
-val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=12)
+val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, num_workers=12)
 
 
-# In[72]:
+# In[14]:
 
 
 train_epoch = smp_utils.train.TrainEpoch(
@@ -260,13 +261,13 @@ valid_epoch = smp_utils.train.ValidEpoch(
 )
 
 
-# In[73]:
+# In[15]:
 
 
-epochs = 40
+epochs = 20
 max_score = 0
 
-if True:
+if not pathlib.Path("best_model.pth").exists():
     for epoch in range(1, epochs + 1):
         print(f"\n Epoch: {epoch}")
         train_logs = train_epoch.run(train_loader)
@@ -277,16 +278,19 @@ if True:
             torch.save(model, './best_model.pth')
             print('Model saved!')
 
-        # エポック25以降は学習率(learning rate)を下げる      
-        if epoch == 25:
+        # エポック10以降は学習率(learning rate)を下げる      
+        if epoch == 10:
             optimizer.param_groups[0]['lr'] = 1e-5
             print('Decrease decoder learning rate to 1e-5!')
 
 
 # ## Classify
 
-# In[74]:
+# In[16]:
 
+
+from PIL.Image import Image, open as im_open
+import PIL.Image
 
 # 可視化用の画像を取得するデータセットを作成(Augmentationなし)
 test_dataset_vis = MyDataset(
@@ -297,17 +301,25 @@ test_dataset_vis = MyDataset(
 def visualize(**images):
     """PLot images in one row."""
     n = len(images)
-    plt.figure(figsize=(16, 5))
+    plt.figure(figsize=(16, 5))    
     for i, (name, image) in enumerate(images.items()):
         plt.subplot(1, n, i + 1)
         plt.xticks([])
         plt.yticks([])
         plt.title(' '.join(name.split('_')).title())
-        plt.imshow(image)
+        plt.imshow(image, cmap="gray")
+    plt.figure(figsize=(16, 5))
+    data = np.array(list(CLASS_MAP.keys()))
+    data *= 25
+    colors = []
+    for d in data:
+        d /= 255
+        colors.append((d, d, d))
+    plt.bar(x=CLASS_MAP.values(), height=data, color=colors)
     plt.show()
 
 
-# In[75]:
+# In[18]:
 
 
 # 1. 学習モデルの読み込み
@@ -325,23 +337,28 @@ test_dataloader = DataLoader(test_dataset)
 n_data = 2 # 確認するデータの数
 for i in range(n_data):
     n = np.random.choice(len(test_dataset))
+    # n = 100
 
     # 3. 新規データの取得
     image_vis = test_dataset_vis[n][0].astype('uint8')
     image, gt_mask = test_dataset[n]
-    gt_mask = gt_mask.squeeze()
+    gt_mask = gt_mask.squeeze() * 25
+    gt_mask[gt_mask < 0] = 0
     
     # 3. 新規データの推論
     x_tensor = image.to(DEVICE).unsqueeze(0)
     pr_mask = best_model.module.predict(x_tensor)    
-    pr_mask.squeeze_(dim=0)
-    pr_mask, _ = torch.max(pr_mask, dim=0)
-    pr_mask = (pr_mask.squeeze().cpu().numpy().round())       
-        
-    gt_mask = torch.argmax(gt_mask, dim=0)
+    pr_mask: torch.Tensor = pr_mask.squeeze(dim=0)
+    _, pr_mask = torch.max(pr_mask, dim=0)
+    print(pr_mask)
+    pr_mask = torch.squeeze(pr_mask, dim=0)
+    pr_mask = pr_mask.cpu().numpy()    
+    pr_mask[pr_mask > len(CLASSES)] = len(CLASSES)
+    pr_mask[pr_mask < 0] = 0
+    pr_mask *= 25
 
-    print(pr_mask.shape, gt_mask.shape)
-        
+    gt_mask = torch.argmax(gt_mask, dim=0).numpy()    
+
     # 4. 可視化
     visualize(
         image=image_vis, 
