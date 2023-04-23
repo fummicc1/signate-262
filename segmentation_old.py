@@ -38,14 +38,14 @@ TEST_DIR = pathlib.Path('./test')
 # In[4]:
 
 
-x_train_dir = TRAIN_DIR / "modern" / "images"
-y_train_dir = TRAIN_DIR / "modern" / "masks"
+x_train_dir = TRAIN_DIR / "old" / "images"
+y_train_dir = TRAIN_DIR / "old" / "masks"
 
-x_valid_dir = VAL_DIR / "modern" / "images"
-y_valid_dir = VAL_DIR / "modern" / "masks"
+x_valid_dir = VAL_DIR / "old" / "images"
+y_valid_dir = VAL_DIR / "old" / "masks"
 
-x_test_dir = TEST_DIR / "modern" / "images"
-y_test_dir = TEST_DIR / "modern" / "masks"
+x_test_dir = TEST_DIR / "old" / "images"
+y_test_dir = TEST_DIR / "old" / "masks"
 
 
 # In[5]:
@@ -64,13 +64,14 @@ def get_validation_augmentation():
     ]
     return albu.Compose(test_transform)
 
+
 def to_tensor(x: np.ndarray, **kargs):
     return torch.tensor(x.transpose(2, 0, 1), dtype=torch.float)
 
-def get_preprocessing(preprocessing_fn):
+def get_preprocessing(preprocessing_fn, has_mask: bool = True):
     _transform = [
         albu.Lambda(image=preprocessing_fn) if preprocessing_fn is not None else albu.Compose([]),
-        albu.Lambda(image=to_tensor, mask=to_tensor)
+        albu.Lambda(image=to_tensor, mask=to_tensor) if has_mask else albu.Lambda(image=to_tensor)
     ]
     return albu.Compose(_transform)
 
@@ -105,9 +106,6 @@ CLASS_MAP = {
   2: "3_typography",
   3: "4_illustration",
   4: "5_stamp",
-  5: "6_headline",
-  6: "7_caption",
-  7: "8_textline",
 }
 CLASSES = CLASS_MAP.values()
 DEVICE = 'cuda'
@@ -152,6 +150,8 @@ class MyDataset(Dataset):
                 image = sample['image']
             return image, None
         mask = cv2.imread(self.masks[i], 0) // 25        
+        # 0_backgroundについては-1になってしまう
+        mask[mask < 0] = 0
         
         # 学習対象のクラス(例えば、'car')のみを抽出
         masks = [(mask == v) for v in self.class_values]
@@ -271,7 +271,7 @@ valid_epoch = smp_utils.train.ValidEpoch(
 epochs = 20
 max_score = 0
 
-if not pathlib.Path("best_model_modern.pth").exists():
+if not pathlib.Path("best_model_old.pth").exists():
     for epoch in range(1, epochs + 1):
         print(f"\n Epoch: {epoch}")
         train_logs = train_epoch.run(train_loader)
@@ -279,7 +279,7 @@ if not pathlib.Path("best_model_modern.pth").exists():
         # 評価関数の値が更新されたらモデルを保存
         if max_score < valid_logs['iou_score']:
             max_score = valid_logs['iou_score']
-            torch.save(model, './best_model_modern.pth')
+            torch.save(model, './best_model_old.pth')
             print('Model saved!')
 
         # エポック10以降は学習率(learning rate)を下げる      
@@ -312,7 +312,7 @@ def visualize(**images):
         plt.yticks([])
         plt.title(' '.join(name.split('_')).title())
         plt.imshow(image, cmap="gray")
-    plt.figure(figsize=(16, 5))
+    plt.figure(figsize=(8, 4))
     data = np.array(list(CLASS_MAP.keys()))
     data *= 25
     colors = []
@@ -327,7 +327,7 @@ def visualize(**images):
 
 
 # 1. 学習モデルの読み込み
-best_model = torch.load(pathlib.Path("best_model_modern.pth").as_posix())
+best_model = torch.load(pathlib.Path("best_model_old.pth").as_posix())
 
 # 2. 推論用のデータセット、データローダーの作成
 test_dataset = MyDataset(
@@ -338,7 +338,7 @@ test_dataset = MyDataset(
 )
 test_dataloader = DataLoader(test_dataset)
 
-n_data = 2 # 確認するデータの数
+n_data = 2
 for i in range(n_data):
     # n = np.random.choice(len(test_dataset))
     # n = 100
@@ -355,11 +355,14 @@ for i in range(n_data):
     pr_mask: torch.Tensor = pr_mask.squeeze(dim=0)
     _, pr_mask = torch.max(pr_mask, dim=0)
     pr_mask = torch.squeeze(pr_mask, dim=0)
-    pr_mask = pr_mask.cpu().numpy()
+    pr_mask = pr_mask.cpu().detach().numpy()  
     pr_mask *= 25
+    print(np.unique(pr_mask, return_counts=True))
 
-    gt_mask = torch.argmax(gt_mask, dim=0).numpy()    
+    _, gt_mask = torch.max(gt_mask, dim=0)
+    gt_mask = gt_mask.cpu().detach().numpy()    
     gt_mask *= 25
+    print(np.unique(gt_mask, return_counts=True))
 
     # 4. 可視化
     visualize(
@@ -367,54 +370,41 @@ for i in range(n_data):
         ground_truth_mask=gt_mask, 
         predicted_mask=pr_mask
     )
-    
-    print("gt_mask", np.unique(gt_mask))
-    print("pr_mask", np.unique(pr_mask))
 
 
 # In[18]:
 
 
 # 1. 学習モデルの読み込み
-best_model = torch.load(pathlib.Path("best_model_modern.pth").as_posix())
+best_model = torch.load(pathlib.Path("best_model_old.pth").as_posix())
 
 # 2. 推論用のデータセット、データローダーの作成
 test_dataset = MyDataset(
     x_test_dir, 
     y_test_dir, 
-    preprocessing=get_preprocessing(None),    
+    preprocessing=get_preprocessing(None, has_mask=False),
 )
 test_dataloader = DataLoader(test_dataset)
 
 n_data = len(test_dataset) # 確認するデータの数
-for i in range(n_data):
+for i in range(0):
     # n = np.random.choice(len(test_dataset))
     # n = 100
     n = i
 
     # 3. 新規データの取得
-    image_vis = test_dataset_vis[n][0].astype('uint8')
-    image, _ = test_dataset[n]    
+    image, _ = test_dataset[n]
     
     # 3. 新規データの推論
     x_tensor = image.to(DEVICE).unsqueeze(0)
     pr_mask = best_model.module.predict(x_tensor)    
     pr_mask: torch.Tensor = pr_mask.squeeze(dim=0)
     _, pr_mask = torch.max(pr_mask, dim=0)
-    pr_mask = pr_mask.detach().cpu().numpy()
+    pr_mask = pr_mask.cpu().detach().numpy()
     pr_mask *= 25
     print(np.unique(pr_mask, return_counts=True))
-    out_dir = TEST_DIR / "modern" / "predicted"
+
+    out_dir = TEST_DIR / "old" / "predicted"
     out_dir.mkdir(exist_ok=True)
-    plt.imsave(out_dir / list(x_test_dir.iterdir())[i].name, pr_mask, cmap="gray")    
-    # plt.imshow(pr_mask, cmap="gray")
-
-
-# In[ ]:
-
-
-img = im_open(out_dir / list(x_test_dir.iterdir())[i].name).convert("L")
-img = img.point(lambda x: x // 25 * 25)
-print(np.unique(img, return_counts=True))
-plt.imshow(img, cmap="gray")
+    plt.imsave(out_dir / list(x_test_dir.iterdir())[i].name, pr_mask, cmap="gray")
 
