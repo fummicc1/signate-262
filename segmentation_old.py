@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import os
@@ -21,13 +21,13 @@ import albumentations as albu
 import torch.nn as nn
 
 
-# In[ ]:
+# In[2]:
 
 
 os.chdir("/home/fummicc1/codes/signate/")
 
 
-# In[ ]:
+# In[3]:
 
 
 TRAIN_DIR = pathlib.Path('./train')
@@ -35,7 +35,7 @@ VAL_DIR = pathlib.Path('./val')
 TEST_DIR = pathlib.Path('./test')
 
 
-# In[ ]:
+# In[4]:
 
 
 x_train_dir = TRAIN_DIR / "old" / "images"
@@ -48,13 +48,15 @@ x_test_dir = TEST_DIR / "old" / "images"
 y_test_dir = TEST_DIR / "old" / "masks"
 
 
-# In[ ]:
+# In[5]:
 
 
 def get_training_augmentation():
-    train_transform = [
+    train_transform = [               
+        albu.RandomScale(),
+        albu.ToGray(),                
         albu.PadIfNeeded(min_height=960, min_width=960, always_apply=True, border_mode=0),
-        albu.RandomCrop(height=960, width=960, always_apply=True)
+        albu.RandomCrop(height=960, width=960, always_apply=True),
     ]
     return albu.Compose(train_transform)
     
@@ -76,7 +78,7 @@ def get_preprocessing(preprocessing_fn, has_mask: bool = True):
     return albu.Compose(_transform)
 
 
-# In[ ]:
+# In[6]:
 
 
 # 可視化用の関数
@@ -93,7 +95,7 @@ def visualize(**images):
     plt.show()
 
 
-# In[ ]:
+# In[7]:
 
 
 # パラメータ
@@ -111,7 +113,7 @@ CLASSES = CLASS_MAP.values()
 DEVICE = 'cuda'
 
 
-# In[ ]:
+# In[8]:
 
 
 class MyDataset(Dataset):
@@ -168,14 +170,14 @@ class MyDataset(Dataset):
         return image, mask
 
 
-# In[ ]:
+# In[9]:
 
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-# In[ ]:
+# In[10]:
 
 
 # SMPを用いて学習済みモデルを取得(アーキテクチャはFPN)
@@ -189,7 +191,7 @@ model = model.to(device=DEVICE).type(torch.float)
 model = nn.DataParallel(model).to(device=DEVICE).type(torch.float)
 
 
-# In[ ]:
+# In[11]:
 
 
 # 損失関数
@@ -206,7 +208,7 @@ optimizer = torch.optim.Adam([
 ])
 
 
-# In[ ]:
+# In[12]:
 
 
 from torch.utils.data import DataLoader
@@ -221,10 +223,10 @@ train_dataset = MyDataset(
 )
 
 # データローダーの作成
-train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=12)
+train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=0)
 
 
-# In[ ]:
+# In[13]:
 
 
 from torch.utils.data import DataLoader
@@ -238,10 +240,10 @@ val_dataset = MyDataset(
 )
 
 # データローダーの作成
-val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, num_workers=12)
+val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, num_workers=0)
 
 
-# In[ ]:
+# In[14]:
 
 
 train_epoch = smp_utils.train.TrainEpoch(
@@ -262,10 +264,10 @@ valid_epoch = smp_utils.train.ValidEpoch(
 )
 
 
-# In[ ]:
+# In[15]:
 
 
-epochs = 20
+epochs = 50
 max_score = 0
 
 if not pathlib.Path("best_model_old.pth").exists():
@@ -287,7 +289,7 @@ if not pathlib.Path("best_model_old.pth").exists():
 
 # ## Classify
 
-# In[ ]:
+# In[16]:
 
 
 from PIL.Image import Image, open as im_open
@@ -320,7 +322,7 @@ def visualize(**images):
     plt.show()
 
 
-# In[ ]:
+# In[17]:
 
 
 # 1. 学習モデルの読み込み
@@ -369,38 +371,40 @@ for i in range(n_data):
     )
 
 
-# In[ ]:
+# In[23]:
 
 
 # 1. 学習モデルの読み込み
 best_model = torch.load(pathlib.Path("best_model_old.pth").as_posix())
 
 # 2. 推論用のデータセット、データローダーの作成
-valid_dataset = MyDataset(
+test_dataset = MyDataset(
     x_test_dir, 
     y_test_dir, 
     preprocessing=get_preprocessing(None, has_mask=False),
 )
-test_dataloader = DataLoader(valid_dataset)
+test_dataloader = DataLoader(test_dataset)
 
-n_data = len(valid_dataset) # 確認するデータの数
-for i in range(0):
+n_data = len(test_dataset) # 確認するデータの数
+for i in range(n_data):
     # n = np.random.choice(len(test_dataset))
     # n = 100
     n = i
 
     # 3. 新規データの取得
-    image, _ = valid_dataset[n]
+    image, _ = test_dataset[n]
     
     # 3. 新規データの推論
     x_tensor = image.to(DEVICE).unsqueeze(0)
     pr_mask = best_model.module.predict(x_tensor)    
     pr_mask: torch.Tensor = pr_mask.squeeze(dim=0)
     _, pr_mask = torch.max(pr_mask, dim=0)
+    pr_mask = torch.stack([pr_mask, pr_mask, pr_mask], dim=0)
     pr_mask = pr_mask.cpu().detach().numpy()
+    pr_mask = np.transpose(pr_mask, (1, 2, 0)).astype(np.uint8)
     pr_mask *= 25
 
     out_dir = TEST_DIR / "old" / "predicted"
     out_dir.mkdir(exist_ok=True)
-    plt.imsave(out_dir / list(x_test_dir.iterdir())[i].name, pr_mask, cmap="gray")
+    plt.imsave(out_dir / list(x_test_dir.iterdir())[i].name, pr_mask)
 
