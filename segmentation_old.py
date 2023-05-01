@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 import os
@@ -21,13 +21,13 @@ import albumentations as albu
 import torch.nn as nn
 
 
-# In[2]:
+# In[ ]:
 
 
 os.chdir("/home/fummicc1/codes/signate/")
 
 
-# In[3]:
+# In[ ]:
 
 
 TRAIN_DIR = pathlib.Path('./train')
@@ -35,7 +35,7 @@ VAL_DIR = pathlib.Path('./val')
 TEST_DIR = pathlib.Path('./test')
 
 
-# In[4]:
+# In[ ]:
 
 
 x_train_dir = TRAIN_DIR / "old" / "images"
@@ -48,7 +48,7 @@ x_test_dir = TEST_DIR / "old" / "images"
 y_test_dir = TEST_DIR / "old" / "masks"
 
 
-# In[5]:
+# In[ ]:
 
 
 def get_training_augmentation():
@@ -62,7 +62,7 @@ def get_training_augmentation():
     
 def get_validation_augmentation():
     test_transform = [
-        albu.PadIfNeeded(1216, 1216)
+        albu.Resize(height=960, width=960),
     ]
     return albu.Compose(test_transform)
 
@@ -78,7 +78,7 @@ def get_preprocessing(preprocessing_fn, has_mask: bool = True):
     return albu.Compose(_transform)
 
 
-# In[6]:
+# In[ ]:
 
 
 # 可視化用の関数
@@ -95,7 +95,7 @@ def visualize(**images):
     plt.show()
 
 
-# In[7]:
+# In[ ]:
 
 
 # パラメータ
@@ -113,7 +113,7 @@ CLASSES = CLASS_MAP.values()
 DEVICE = 'cuda'
 
 
-# In[8]:
+# In[ ]:
 
 
 class MyDataset(Dataset):
@@ -170,14 +170,14 @@ class MyDataset(Dataset):
         return image, mask
 
 
-# In[9]:
+# In[ ]:
 
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-# In[10]:
+# In[ ]:
 
 
 # SMPを用いて学習済みモデルを取得(アーキテクチャはFPN)
@@ -191,7 +191,7 @@ model = model.to(device=DEVICE).type(torch.float)
 model = nn.DataParallel(model).to(device=DEVICE).type(torch.float)
 
 
-# In[11]:
+# In[ ]:
 
 
 # 損失関数
@@ -208,7 +208,7 @@ optimizer = torch.optim.Adam([
 ])
 
 
-# In[12]:
+# In[ ]:
 
 
 from torch.utils.data import DataLoader
@@ -226,7 +226,7 @@ train_dataset = MyDataset(
 train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=0)
 
 
-# In[13]:
+# In[ ]:
 
 
 from torch.utils.data import DataLoader
@@ -243,7 +243,7 @@ val_dataset = MyDataset(
 val_loader = DataLoader(val_dataset, batch_size=4, shuffle=False, num_workers=0)
 
 
-# In[14]:
+# In[ ]:
 
 
 train_epoch = smp_utils.train.TrainEpoch(
@@ -264,7 +264,7 @@ valid_epoch = smp_utils.train.ValidEpoch(
 )
 
 
-# In[15]:
+# In[ ]:
 
 
 epochs = 50
@@ -289,7 +289,7 @@ if not pathlib.Path("best_model_old.pth").exists():
 
 # ## Classify
 
-# In[16]:
+# In[ ]:
 
 
 from PIL.Image import Image, open as im_open
@@ -322,7 +322,7 @@ def visualize(**images):
     plt.show()
 
 
-# In[17]:
+# In[ ]:
 
 
 # 1. 学習モデルの読み込み
@@ -371,7 +371,7 @@ for i in range(n_data):
     )
 
 
-# In[23]:
+# In[18]:
 
 
 # 1. 学習モデルの読み込み
