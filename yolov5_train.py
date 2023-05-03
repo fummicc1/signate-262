@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[2]:
 
 
 import os
@@ -33,47 +33,49 @@ import subprocess
 from wandb_callback import callbacks 
 
 
-# In[ ]:
-
-
-# os.chdir("/workspace")
-
-
 # ## Run
 
-# In[ ]:
+# In[13]:
 
 
-mode = ""
-use_yolo_pretrained = False
+mode = "modern"
+use_trained_weights = False
 
 
-# In[ ]:
+# In[14]:
 
 
-if mode == "":    
-    data_path="/home/fummicc1/codes/signate/modern_book.yaml"
-    if not use_yolo_pretrained:
-        weight_path="/home/fummicc1/codes/signate/yolov5x6.pt"
-    else:
-        weight_path="/home/fummicc1/codes/signate/yolo_modern_weights-base.pt"
-    out_path="/home/fummicc1/codes/signate/results/train_modern_book_yolov5"
-    command = f"cd yolov5 && python train.py --img 1200 --epochs 30  --data {data_path} --weights {weight_path} --project {out_path} --device 0,1,2,3"
-    # --batch-size 8
-    subprocess.run(command, shell=True)
+if mode == "modern":
+    kfolds = 4
+    for i in range(3, kfolds):
+        if i > 1:
+            use_trained_weights = True
+        data_path=f"/home/fummicc1/codes/signate/modern_book_kfold{i}.yaml"
+        if not use_trained_weights:
+            weight_path="/home/fummicc1/codes/signate/yolov5x6.pt"
+        else:
+            weight_path="/home/fummicc1/codes/signate/yolo_modern_weights-base.pt"
+        out_path="/home/fummicc1/codes/signate/results/train_modern_book_yolov5"
+        command = f"cd yolov5 && python train.py --img 800 --epochs 30 --data {data_path} --batch-size 8 --weights {weight_path} --project {out_path} --device 0,1,2,3"
+        subprocess.run(command, shell=True)
+        break
 
 
-# In[ ]:
+# In[15]:
 
 
-if mode == "":
-    data_path="/home/fummicc1/codes/signate/old_book.yaml"
-    
-    if not use_yolo_pretrained:
-        weight_path="/home/fummicc1/codes/signate/yolov5x6.pt"
-    else:
-        weight_path="/home/fummicc1/codes/signate/yolo_old_weights-base.pt"
-    out_path="/home/fummicc1/codes/signate/results/train_old_book_yolov5"
-    command = f"cd yolov5 && python train.py --img 1200 --epochs 30 --data {data_path} --weights {weight_path} --project {out_path} --device 0,1,2,3"
-    subprocess.run(command, shell=True)
+if mode == "old":
+    kfolds = 4
+    for i in range(1, kfolds):
+        if i > 1:
+            use_trained_weights = True
+        data_path=f"/home/fummicc1/codes/signate/old_book_kfold{i}.yaml"
+        if not use_trained_weights:
+            weight_path="/home/fummicc1/codes/signate/yolov5x6.pt"
+        else:
+            weight_path="/home/fummicc1/codes/signate/yolo_old_weights-base.pt"        
+        out_path="/home/fummicc1/codes/signate/results/train_old_book_yolov5"
+        command = f"cd yolov5 && python train.py --img 800 --epochs 30 --data {data_path} --batch-size 8 --weights {weight_path} --project {out_path} --device 0,1,2,3"
+        subprocess.run(command, shell=True)
+        break
 

@@ -6,23 +6,20 @@ import json
 def label_str_to_num(label: str, is_modern: bool) -> int:    
     if is_modern:
         m = {
-            0: "0_background",
-            1: "1_overall",
-            2: "4_illustration",
-            3: "5_stamp",
-            4: "6_headline",
-            5: "7_caption",
-            6: "8_textline",
-            7: "9_table"
+            0: "1_overall",
+            1: "4_illustration",
+            2: "5_stamp",
+            3: "6_headline",
+            4: "7_caption",
+            5: "8_textline",
         }
     else:
         m = {
-            0: "0_background",
-            1: "1_overall",
-            2: "2_handwritten",
-            3: "3_typography",
-            4: "4_illustration",
-            5: "5_stamp",
+            0: "1_overall",
+            1: "2_handwritten",
+            2: "3_typography",
+            3: "4_illustration",
+            4: "5_stamp",
         }
     for k, v in m.items():
         if v == label:

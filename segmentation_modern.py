@@ -54,15 +54,16 @@ y_test_dir = TEST_DIR / "modern" / "masks"
 def get_training_augmentation():
     train_transform = [
         albu.RandomScale(),
-        albu.ToGray(),                
-        albu.PadIfNeeded(min_height=640, min_width=640, always_apply=True, border_mode=0),
-        albu.RandomCrop(height=640, width=640, always_apply=True),
+        albu.ToGray(),
+        albu.ColorJitter(),
+        albu.PadIfNeeded(min_height=960, min_width=960, always_apply=True, border_mode=0),
+        albu.RandomCrop(height=960, width=960, always_apply=True),
     ]
     return albu.Compose(train_transform)
     
 def get_validation_augmentation():
     test_transform = [
-        albu.Resize(height=640, width=640)
+        albu.Resize(height=960, width=960)
     ]
     return albu.Compose(test_transform)
 
@@ -207,7 +208,7 @@ metrics = [
 
 # 最適化関数
 optimizer = torch.optim.Adam([ 
-    dict(params=model.parameters(), lr=0.0001),
+    dict(params=model.parameters(), lr=0.00005),
 ])
 
 
