@@ -38,8 +38,27 @@ from wandb_callback import callbacks
 # In[13]:
 
 
-mode = "modern"
+mode = "all"
 use_trained_weights = False
+
+
+# In[ ]:
+
+
+if mode == "all":
+    kfolds = 4
+    for i in range(3, kfolds):
+        if i > 1:
+            use_trained_weights = True
+        data_path=f"/home/fummicc1/codes/signate/book_kfold{i}.yaml"
+        if not use_trained_weights:
+            weight_path="/home/fummicc1/codes/signate/yolov5x6.pt"
+        else:
+            weight_path="/home/fummicc1/codes/signate/yolo_all_weights-base.pt"
+        out_path="/home/fummicc1/codes/signate/results/train_all_book_yolov5"
+        command = f"cd yolov5 && python train.py --img 800 --epochs 30 --data {data_path} --batch-size 8 --weights {weight_path} --project {out_path} --device 0,1,2,3"
+        subprocess.run(command, shell=True)
+        break
 
 
 # In[14]:
@@ -47,7 +66,7 @@ use_trained_weights = False
 
 if mode == "modern":
     kfolds = 4
-    for i in range(3, kfolds):
+    for i in range(1, kfolds):
         if i > 1:
             use_trained_weights = True
         data_path=f"/home/fummicc1/codes/signate/modern_book_kfold{i}.yaml"

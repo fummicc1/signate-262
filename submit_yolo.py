@@ -3,8 +3,8 @@ import json
 from PIL.Image import open as im_open
 from glob import glob
 
-modern_detection_path = "/home/fummicc1/codes/signate/yolov5/runs/detect/exp28/labels"
-old_detection_path = "/home/fummicc1/codes/signate/yolov5/runs/detect/exp29/labels"
+modern_detection_path = "/home/fummicc1/codes/signate/yolov5/runs/detect/exp42/labels"
+old_detection_path = "/home/fummicc1/codes/signate/yolov5/runs/detect/exp43/labels"
 # modern_detection_path = "/home/fummicc1/codes/signate/emsemble/modern-ret"
 # old_detection_path = "/home/fummicc1/codes/signate/emsemble/old-ret"
 is_emsemble = False
@@ -20,6 +20,17 @@ modern_id_map = {
     "3": "6_headline",
     "4": "7_caption",
     "5": "8_textline",
+}
+
+all_id_map = {
+    "0": "1_overall",
+    "1": "2_handwritten",
+    "2": "3_typography",
+    "3": "4_illustration",
+    "4": "5_stamp",    
+    "5": "6_headline",
+    "6": "7_caption",
+    "7": "8_textline",
 }
 
 old_id_map = {
@@ -71,7 +82,7 @@ for i, label_results_paths in enumerate(all_label_results_paths):
                 width *= img_width
                 height *= img_height
                 if not is_emsemble:
-                    maps = modern_id_map if is_modern else old_id_map
+                    maps = all_id_map if is_modern else old_id_map
                     if str(id) not in maps:
                         print("skipped id:", id)
                         continue

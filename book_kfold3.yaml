@@ -8,15 +8,19 @@
 
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path: /home/fummicc1/codes/signate/kfolds/old  # dataset root dir
+path: /home/fummicc1/codes/signate/kfolds/all  # dataset root dir
 train: train/3/images  # train images (relative to 'path') 128 images
 val: val/3/images  # val images (relative to 'path') 128 images
 
 # Classes
-nc: 5
+nc: 9
 names:
   0: 1_overall  
   1: 2_handwritten  
   2: 3_typography
   3: 4_illustration
   4: 5_stamp
+  5: 6_headline
+  6: 7_caption
+  7: 8_textline
+  8: 9_table
